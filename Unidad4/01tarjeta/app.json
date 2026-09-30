@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Mi-App",
-    "slug": "Mi-App",
+    "name": "01tarjeta",
+    "slug": "01tarjeta",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "miapp",
+    "scheme": "01tarjeta",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon"
