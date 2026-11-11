@@ -1,0 +1,110 @@
+Se debe mostrar en una pantalla un listado con productos del supermercado. 
+Cada producto tiene un identificador, un nombre  y un precio. 
+Los datos no vendran de internet, sino de una lista fija en memoria (mock) con 3 productos. 
+
+Domain
+
+src/
+    domain/
+        entities/
+            Producto.ts
+                + id: number (get)
+                + nombre: string (get)
+                + precio: number (get)
+        
+        interfaces/
+            repositories/
+                IProductosRepository.ts
+                    + getListadoProductos(): Producto[]
+
+            useCases/
+                IUseCasesProductos.ts
+                    + getListadoProductos(): Producto[]
+
+
+Se debe mostrar en una pantalla un listado con los productos que estén en oferta (precio menor a 5 €). 
+Cada producto tiene id, nombre y precio. 
+Los datos vendrán de una lista en memoria (mock) con 5 productos. 
+En la pantalla, además de los datos del producto, se debe mostrar un color para resaltar la oferta.
+
+Data
+
+src/
+    data/ 
+        repositories/ 
+            productos/ 
+                MockRepositoryProductos.ts implements IProductosRepository 
+                    + getListadoProductos(): Producto[] 
+                    // Retorna en memoria un array estático con 5 entidades Producto inventadas
+
+Domain
+
+src/
+    domain/
+        entities/
+            Producto.ts
+                + id: number (get)
+                + nombre: string (get)
+                + precio: number (get)
+        
+        interfaces/
+            repositories/
+                IProductosRepository.ts
+                    + getListadoProductos(): Producto[]
+
+            useCases/
+                IUseCasesProductos.ts
+                    + getProductosEnOferta(): Producto[]
+
+Aplication
+
+src/
+    aplication/
+        usecases/
+            productos/
+                UseCasesProductos.ts : implements IUseCasesProductos
+                // Se inyecta IProductosRepository
+                + getProductosEnOferta (): Producto []
+                    // Llama a getListadoProductos() del repositorio 
+                    // Filtra el array dejando solo los que tengan precio < 5
+                    // Retorna la lista filtrada                
+
+Presentation
+
+src/ 
+    presentation/
+        viewModels/
+            ViewModelProductosOferta.ts
+                // Se le inyecta IUseCasesProductos
+                + productosOferta: ProductoConColor [] (get)
+                + isLoading: boolean (get)
+                + error: string | null (get)
+                - cargarOfertas(): void
+                    // Llama a getProductosEnOferta() del caso de uso. 
+                    // Pasa el resultado por ProductoConColorMapper para añadirle el color verde. 
+                    // Asigna el resultado a productosOferta y pone isLoading en false. 
+
+        views/
+            ViewProductosOferta.tsx     
+                // Instancia el VMProductosOferta 
+                // Pantalla en React Native que dibuja la lista con el nombre, precio y etiqueta verde     
+
+        models/
+            dto/
+                ProductoConColor.ts
+                    + id: number (get)
+                    + nombre: string (get)
+                    + precio: number (get)
+                    + color: string (get)
+
+        mappers/
+            ProductoConColorMapper.ts
+                + map(productos: Producto[]): ProductoConColor[]
+                  // Transforma cada Producto añadiéndole el color correspondiente para la vista
+
+Core
+
+src/ 
+    core/ 
+        container.ts 
+        // Configuración de inyección de dependencias (IoC Container con InversifyJS)

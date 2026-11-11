@@ -1,0 +1,78 @@
+Se debe mostrar una vista con un listado de personas (7 personas en un mock estático). 
+Cada persona tiene id, nombre, apellidos y fechaNacimiento. 
+En la pantalla debe aparecer el nombre, los apellidos y una marca (check) no modificable 
+que indique si es mayor de edad o no.
+
+
+Data
+
+src/
+    data/
+        repositories/
+            personas/
+                MockRepositoryPersonas.ts implements IPersonasRepository
+                    + getPersonas(): Persona[]
+                    // Retorna en memoria un array estático con las 7 entidades Persona inventadas
+
+
+
+Domain
+
+src/
+    domain/
+        entities/
+            Persona.ts
+                + id: number (get)
+                + nombre: string (get)
+                + apellidos: string (get)
+                + fechaNacimiento: Date (get)
+                + esMayorEdad(): boolean (get)
+                    // Calcula si han pasado 18 años desde fechaNacimiento hasta la fecha actual
+
+        interfaces/
+            repositories/
+                IPersonasRepository.ts
+                    + getPersonas(): Persona[]
+
+            useCases/
+                IUseCasePersonas.ts
+                    + getPersonasMayoriaEdad(): Persona[]
+
+Aplication
+
+src/
+    aplication/
+        usecases/
+            personas/
+                UseCasesPersona.ts : implements IUseCasesPersona
+                // Se inyecta IPersonaRepository
+                + getPersonasMayoriaEdad (): Persona[]            
+
+Presentation
+
+src/ 
+    presentation/
+        viewModels/
+            ViewModelPersonas.ts
+                // Se le inyecta IUseCasesPersona
+                + personas: Persona[] (get)
+                + isLoading: boolean (get)
+                + error: string | null (get)
+                - cargarPersonas(): void 
+                    // Pone isLoading en true 
+                    // Llama a getPersonas() del caso de uso inyectado 
+                    //  Asigna la lista a 'personas' 
+                    //  Pone isLoading en false
+
+        views/
+            ViewPersonas.tsx     
+                // Instancia el ViewModelPersonas 
+                // Pantalla en React Native que dibuja la lista    
+
+Core
+
+src/
+    core/
+        container.ts
+            // Configuración del IoC Container (InversifyJS)
+
