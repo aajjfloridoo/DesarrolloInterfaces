@@ -1,0 +1,101 @@
+## 1. Domain (Dominio)
+Aquí residen las entidades y los contratos (reglas de negocio puras, sin depender de librerías ni frameworks).
+
+  src/
+    domain/
+      entities/
+        [Entidad].ts
+          + id: number (get)
+          + [propiedad1]: string (get)
+          + [propiedad2]: number (get)
+          // Si el objeto tiene un cálculo propio, se añade aquí como método:
+          // + calcular[Algo](): boolean | number
+
+      interfaces/
+        repositories/
+          I[Entidad]Repository.ts
+            + get[Datos](): [Entidad][]
+            // Contrato que define qué datos debe entregar la capa de datos
+
+        useCases/
+          IUseCases[Entidad].ts
+            + ejecutar[Accion](): [Entidad][] | [Entidad]
+            // Contrato de la acción concreta que necesita la pantalla
+
+
+## 2. Application (Aplicación)
+Implementa la lógica de negocio concreta de los casos de uso.
+
+  src/
+    application/
+      usecases/
+        [modulo]/
+          UseCases[Entidad].ts : implements IUseCases[Entidad]
+            se le inyecta I[Entidad]Repository
+            + ejecutar[Accion](): [Entidad][] | [Entidad]
+              // 1. Pide los datos al repositorio inyectado
+              // 2. Aplica la regla de negocio (filtrar, ordenar, calcular)
+              // 3. Retorna el resultado final
+
+
+## 3. Presentation (Presentación)
+Capa encargada de la interfaz gráfica y su lógica visual (patrón MVVM).
+
+  src/
+    presentation/
+      viewModels/
+        VM[NombrePantalla].ts
+          Se le INYECTA IUseCases[Entidad]
+          + [datos]: [Entidad][] | [Entidad] | null (get)
+          + isLoading: boolean (get)
+          + error: string | null (get)
+          - cargar[Datos](): void
+            // Llama al caso de uso inyectado, actualiza las variables de estado y gestiona errores
+
+      views/
+        View[NombrePantalla].tsx
+          **Instancia el VM[NombrePantalla]**
+          // Dibuja la UI en React Native leyendo las propiedades (get) del ViewModel
+
+      // --- OPCIONAL (solo si la vista requiere formatos, colores o campos visuales extra) ---
+      // models/
+      //   dto/
+      //     [Entidad]ConFormato.ts
+      //       + id: number (get)
+      //       + [campoExtraParaLaVista]: string (get)
+      // mappers/
+      //   [Entidad]Mapper.ts
+      //     + map([entidades]: [Entidad][]): [Entidad]ConFormato[]
+
+
+## 4. Data (Datos)
+Provee los datos a la aplicación, ya sea desde memoria o desde una red externa.
+
+  src/
+    data/
+      repositories/
+        [modulo]/
+          [Tipo]Repository[Entidad].ts implements I[Entidad]Repository
+            // Opción A: Si es estático (Mock en memoria)
+            + get[Datos](): [Entidad][]
+              // Retorna en memoria el array con los datos fijos inventados
+
+            // Opción B: Si viene de API externa (se inyectaría Api[Entidad]DataSource)
+            // + get[Datos](): Promise<[Entidad][]>
+
+      // --- OPCIONAL (solo si los datos vienen de una API externa) ---
+      // datasources/
+      //   Api[Entidad]DataSource.ts
+      //     + fetch[Datos](): Promise<any>
+      // dto/
+      //   [Entidad]ApiDTO.ts
+      //     // Estructura exacta del JSON recibido de la API
+
+
+## 5. Core
+Configuración del contenedor de inyección de dependencias.
+
+  src/
+    core/
+      container.ts
+      // Configuración de inyección de dependencias (IoC Container con InversifyJS)

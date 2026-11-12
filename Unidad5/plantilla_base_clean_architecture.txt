@@ -1,16 +1,13 @@
-# Estructura del Ejercicio: [Nombre del Ejercicio]
-
-
 ## 1. Domain (Dominio)
 Aquí residen las entidades y los contratos (reglas de negocio puras, sin depender de librerías ni frameworks).
 
   src/
     domain/
       entities/
-        [Entidad].ts
+        mensaje.ts
           + id: number (get)
-          + [propiedad1]: string (get)
-          + [propiedad2]: number (get)
+          + texto: string (get)
+          + autor: string (get)
           // Si el objeto tiene un cálculo propio, se añade aquí como método:
           // + calcular[Algo](): boolean | number
 

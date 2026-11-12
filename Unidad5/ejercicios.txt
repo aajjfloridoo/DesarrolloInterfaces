@@ -14,6 +14,8 @@ src/
                     + getPersonas(): Persona[]
                     // Retorna en memoria un array estático con las 7 entidades Persona inventadas
 
+        datasource/
+            Persona[]
 
 
 Domain
@@ -26,7 +28,7 @@ src/
                 + nombre: string (get)
                 + apellidos: string (get)
                 + fechaNacimiento: Date (get)
-                + esMayorEdad(): boolean (get)
+                + esMayorEdad(fechaNacimiento): boolean (get)
                     // Calcula si han pasado 18 años desde fechaNacimiento hasta la fecha actual
 
         interfaces/
@@ -36,7 +38,9 @@ src/
 
             useCases/
                 IUseCasePersonas.ts
-                    + getPersonasMayoriaEdad(): Persona[]
+                    + getPersonasMayoriaEdad(): PersonasMayores[]
+   
+
 
 Aplication
 
@@ -76,3 +80,196 @@ src/
         container.ts
             // Configuración del IoC Container (InversifyJS)
 
+
+
+Se debe mostrar en una pantalla un listado con los primeros 10 Pokémon. 
+De cada Pokémon necesitamos su identificador (id), su nombre (nombre) y la URL de su imagen frontal (imagenUrl). 
+Además, la aplicación pide una edad al usuario: si el usuario es menor de 10 años, 
+solo se le muestran los primeros 5 Pokémon; si tiene 10 años o más, se le muestran los 10. 
+Los datos se simularán con un mock local simulando la API.
+
+
+
+Data
+
+src/
+    data/
+        repositories/
+            pokemon/
+                MockRepositoryPokemon.ts implements IPokemonRepository
+                    + getPokemon(): Pokemon[]
+                    // Retorna un array estático con las 10 entidades Pokemon inventadas
+
+
+
+Domain
+
+src/
+    domain/
+        entities/
+            Pokemon.ts
+                + id: number (get)
+                + nombre: string (get)
+                + imagenUrl: string (get)
+
+            Usuario.ts
+                + edad: number (get)
+                + nombre: string (get)
+                + fecha: Date (get)
+
+
+        interfaces/
+            repositories/
+                IPokemonRepository.ts
+                    + getPokemon(): Pokemon[]
+
+            useCases/
+                IUseCasePokemon.ts
+                    + getPokemonMayorMenorEdad(edad: int): Pokemon[]
+
+Aplication
+
+src/
+    application/
+        usecases/
+            pokemon/
+                UseCasesPokemon.ts : implements IUseCasesPokemon
+                    // Se inyecta IPokemonRepository
+                + getPokemonMayorMenorEdad(edad: int): Pokemon[]     
+                + MayorMenosDe10(): boolean (get)
+                    // Calcula si es mayor o menor de 10, si es mayor, devuelve true, si es menor, false, segun la fecha de nacimiento del usuario.      
+
+Presentation
+
+src/ 
+    presentation/
+        viewModels/
+            ViewModelPokemon.ts
+                // Se le inyecta IUseCasesPokemon
+                + pokemon: Pokemon[] (get)
+                + isLoading: boolean (get)
+                + error: string | null (get)
+                - cargarListaPokemon(): void 
+                    // Pone isLoading en true 
+                    // Llama a MayorMenosDe10()  
+                    // Llama a getPokemonMayorMenorEdad(edad: int) del caso de uso inyectado
+                    // Se mapea el listado de entidad pokemon a modelo pokemon, seteando el nombre. 
+                    //  Asigna la lista a 'Pokemon' 
+                    //  Pone isLoading en false
+
+        views/
+            ViewPokemon.tsx     
+                // Instancia el ViewModelPokemon 
+                // Pantalla en React Native que dibuja la lista    
+
+
+Core
+
+src/
+    core/
+        container.ts
+            // Configuración del IoC Container (InversifyJS)
+
+
+
+
+Se sigue un patrón MVVM.
+Se debe mostrar por pantalla un listado de las habitaciones que tiene el hotel para reservar 
+y el precio total (multiplicación de los días por el precio por noche de esa habitación).
+No nos preocuparemos por si están reservadas en esas fechas.
+Para mostrar el listado, es necesario: fecha de entrada, fecha de salida, número de personas y número de habitaciones.
+Reglas a validar:
+La fecha de entrada debe ser mayor o igual a hoy.
+La fecha de salida debe ser posterior a la fecha de entrada.
+Las habitaciones son de un máximo de 3 personas (los datos introducidos deben ser coherentes con esto: por ejemplo, para 4 personas no puede pedirse 1 sola habitación).
+
+
+Data
+
+src/
+    domain/
+        entities/
+            Habitaciones.ts
+                + 
+
+        interfaces/
+
+Domain
+
+
+Application
+
+
+Presentation
+
+
+Core
+
+
+Gestión de Turnos en Farmacia de Guardia
+
+Se debe utilizar Clean Architecture, el patrón MVVM e Inyección de Dependencias.
+Se debe mostrar una vista que contenga el listado de los farmacéuticos registrados en el sistema.
+Los datos que debe tener la entidad farmacéutico son: id, nombre, especialidad y estado.
+Los datos se obtendrán a través de un repositorio simulado (mock en local).
+En la cabecera de la pantalla debe aparecer un texto informativo que indique el tipo de servicio activo según la fecha:
+  Si es fin de semana (sábado o domingo) o festivo: "Servicio de Guardia Intensiva".
+  Si es un día laborable ordinario: "Servicio Ordinario de Turnos".
+El listado de farmacéuticos se filtrará según la fecha actual:
+  En días festivos o fines de semana: solo se deben mostrar los farmacéuticos cuya especialidad sea "URGENCIAS" o "PEDIATRIA".
+  En días laborables ordinarios: se mostrarán todos los farmacéuticos sin ninguna restricción de especialidad.
+En la interfaz, cada tarjeta de farmacéutico debe incluir una casilla de verificación visual (isSeleccionado) 
+para que el usuario pueda marcar o desmarcar temporalmente en pantalla a los profesionales antes de confirmar.
+Cada farmacéutico dispondrá de un botón "Confirmar Asignación". Al pulsarlo (enviando el idFarmaceutico), se debe actualizar el estado del profesional a "EN_GUARDIA".
+
+
+Data
+
+src/
+    data/
+        repositories/
+            MockRepositoryFarmaceuticos.ts implements IFarmaceuticosRepository
+                + getFarmaceuticos(): Farmaceuticos []
+                + confirmarAsignacion(id: int): boolean
+
+Domain
+
+src/
+    domain/
+        entities/
+            Farmaceutico.ts
+                + idFarmaceutico: number (get)
+                + nombre: string (get, set)
+                + especialidad: string (get, set)
+                + estado: string (get, set)
+
+        interfaces/
+            repositories/
+                IFarmaceuticosRepository.ts
+                    + getFarmaceuticos(): Farmaceuticos []
+                    + confirmarAsignacion(idFarmaceutico: number): boolean
+            useCases/
+                IUseCaseFarmaceuticos.ts
+                    + getFarmaceuticos(): Farmaceuticos []
+                    + confirmarAsignacion(idFarmaceutico: number): boolean
+
+Application
+
+src/
+    application/
+        usecases/
+
+Presentation
+
+src/
+    presentation/
+        viewmodel/
+        view/
+        model/
+
+
+Core
+
+src/
+    core/
+        container.ts
