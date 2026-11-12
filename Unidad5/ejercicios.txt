@@ -181,30 +181,88 @@ Para mostrar el listado, es necesario: fecha de entrada, fecha de salida, númer
 Reglas a validar:
 La fecha de entrada debe ser mayor o igual a hoy.
 La fecha de salida debe ser posterior a la fecha de entrada.
-Las habitaciones son de un máximo de 3 personas (los datos introducidos deben ser coherentes con esto: por ejemplo, para 4 personas no puede pedirse 1 sola habitación).
+Las habitaciones son de un máximo de 3 personas (los datos introducidos deben ser coherentes con esto: 
+por ejemplo, para 4 personas no puede pedirse 1 sola habitación).
 
 
 Data
 
 src/
-    domain/
-        entities/
-            Habitaciones.ts
-                + 
-
-        interfaces/
+    Data/
+        repositories/
+            Habitaciones/
+                MockRepositoryHabitaciones: implements IHabitacionesRepository
+                    + getHabitaciones(): Habitaciones[]            
 
 Domain
 
+src/
+    domain/
+        entities/
+            Habitaciones.ts
+                + id: number (get)
+                + capacidad: number (get, set)
+                + tipo: string (get, set)
+                + precio: number (get, set)
+
+        interfaces/
+            repositories/
+                IHabitacionesRepository.ts
+                    + getHabitaciones(): Habitaciones[]
+            UseCases/
+                IUseCaseHabitaciones.ts
+                    + consultarHabitaciones(fechaEntrada: Date, fechaSalida: Date,
+                    numPersonas: number, numHabitaciones: number): HabitacionesConPrecio[]
 
 Application
 
+src/
+    application/
+        usecases/
+            Habitaciones/
+                UseCasesHabitaciones.ts: implements IUseCaseHabitaciones
+                 // Se le inyecta IHabitacionesRepository
+                 + consultarHabitaciones (fechaEntrada: Date, fechaSalida: Date, numPersonas: number, numHabitaciones: number): HabitacionesConPrecio[]
+                    // Comprueba que la fecha de entrada debe ser mayor a la de hoy
+                    // Comprueba que la fecha de salida debe dser mayor que la de entrada
+                    // Comprueba que el numero de personas no es mayor que el numero de habitaciones * 3, quie es el maximo.
+                    // Calcula los dias: fechaSalida - fechaEntrada
+                    // Calcula el precio total
+                    // Devuelve el resultado
 
 Presentation
+
+src/
+    presentation/
+        model/
+            dto/
+                HabitacionConPrecio.ts
+                    + id: number (get)
+                    + capacidad: number (get)
+                    + tipo: string (get)
+                    + precio: number (get)
+                    + precioTotal: number (get)
+
+        viewmodels/
+            VMHabitaciones.ts
+                // Se le inyecta IUseCaseHabitaciones
+                + habitaciones: HabitacionConPrecio[] (get)
+                + consultarHabitaciones (fechaEntrada: Date, fechaSalida: Date, numPersonas: number, numHabitaciones: number): HabitacionesConPrecio[]
+                + isLoading: boolean (get)
+                + error: string | null (get)
+
+        views/
+            ViewHabitaciones.tsx
+                // Instancia el VMHabitaciones.ts
+            
 
 
 Core
 
+src/
+    core/
+        container.tsx
+            // Configuracion de inyeccion dependencias
 
 Gestión de Turnos en Farmacia de Guardia
 
@@ -220,7 +278,8 @@ El listado de farmacéuticos se filtrará según la fecha actual:
   En días laborables ordinarios: se mostrarán todos los farmacéuticos sin ninguna restricción de especialidad.
 En la interfaz, cada tarjeta de farmacéutico debe incluir una casilla de verificación visual (isSeleccionado) 
 para que el usuario pueda marcar o desmarcar temporalmente en pantalla a los profesionales antes de confirmar.
-Cada farmacéutico dispondrá de un botón "Confirmar Asignación". Al pulsarlo (enviando el idFarmaceutico), se debe actualizar el estado del profesional a "EN_GUARDIA".
+Cada farmacéutico dispondrá de un botón "Confirmar Asignación". Al pulsarlo (enviando el idFarmaceutico), 
+se debe actualizar el estado del profesional a "EN_GUARDIA".
 
 
 Data
@@ -250,7 +309,7 @@ src/
                     + confirmarAsignacion(idFarmaceutico: number): boolean
             useCases/
                 IUseCaseFarmaceuticos.ts
-                    + getFarmaceuticos(): Farmaceuticos []
+                    + getFarmaceuticosSegunDia(): Farmaceuticos []
                     + confirmarAsignacion(idFarmaceutico: number): boolean
 
 Application
@@ -258,14 +317,35 @@ Application
 src/
     application/
         usecases/
+            UseCaseFarmaceuticos.ts implements IUseCaseFarmaceuticos
+                // Se le inyecta IFarmaceuticosRepository
+                + getFarmaceuticosSegunDia(): Farmaceuticos []
+                    // Evalúa si la fecha actual (new Date()) es sábado, domingo o festivo 
+                    // Llama a getFarmaceuticos() del repositorio inyectado 
+                    // Si es fin de semana/festivo: filtra dejando solo "URGENCIAS" o "PEDIATRIA" 
+                    // Si es laborable: devuelve el listado completo sin filtros
+                + confirmarAsignacion(idFarmaceutico)
 
 Presentation
 
 src/
     presentation/
         viewmodel/
+            VMFarmaceuticos.ts
+                // Se le inyecta IUseCaseFarmaceuticos
+                + listadoFarmaceuticos: ModelFarmaceutico[] (get)
+                + textoInformativo: string (get)
+                + isLoading: boolean (get)
+                + error: string | null (get)
+                - cargarDatos(): void
+                - asignarTextoInformativo(): void
+
+
         view/
         model/
+            ModelFarmaceutico.ts
+                + Farmaceutico: EntidadFarmaceutico (get, set)
+                + EstaSeleccionado: boolean (get, set)
 
 
 Core
@@ -273,3 +353,160 @@ Core
 src/
     core/
         container.ts
+
+
+Se debe utilizar Clean Architecture, patrón MVVM e Inyección de Dependencias
+Se debe mostrar una vista donde el usuario pueda seleccionar un departamento ("VENTAS", "DESARROLLO", "RRHH").
+Cada empleado tiene: id, nombre, sueldo y departamento.
+Los datos vendrán de una lista simulada en memoria (Mock con varios empleados).
+Reglas de negocio:
+Al elegir un departamento, se mostrarán solo los empleados que pertenezcan a él.
+Cada departamento tiene un presupuesto límite fijado en el sistema (por ejemplo, 6.000 €). 
+Si la suma de los sueldos de los empleados de ese departamento supera el presupuesto, 
+se activará un aviso de sobrecoste (presupuestoExcedido = true).
+En la pantalla:
+Debe mostrarse la lista de empleados del departamento y el total acumulado en sueldos.
+Si el presupuesto está excedido, la pantalla mostrará una etiqueta de color rojo de alerta.
+Acción interactiva:
+Cada empleado dispone de una acción para trasladarlo a otro departamento (cambiar su campo departamento).
+
+Core
+
+src/
+    core/
+        container.tsx
+            // Configuracion de inyeccion de dependencias
+
+Domain
+
+src/
+    domain/
+        entities/
+            Empleado.tsx
+                + idEmpleado: number (get)
+                + nombre: string (get, set)
+                + sueldo: double (get, set)
+                + departamento: string (get, set)
+
+        interfaces/
+            repositories/
+                IEmpleadosRepository.tsx
+                    + getEmpleados(): Empleados[]
+                    + cambiarDepartamento(idEmpleado: number, nuevoDepartamento: string): boolean
+
+            UseCases/
+                IUseCaseEmpleados.ts
+                    + getEmpleadosPorDepartamento(): Empleados[]
+                    + presupuestoExcedido(departamento: string, presupuesto: number): boolean    
+                    + cambiarDepartamento(idEmpleado: number, nuevoDepartamento: string): boolean
+
+Data
+
+src/
+    Data/
+        repositories/
+            empleados/
+                MockRepositoryEmpleados.ts: implements IEmpleadosRepository
+                    // Devuelve un array estatico con todos los empleados
+
+Application
+
+src/
+    application/
+        usecases/
+            empleados/
+                UseCaseEmpleados.ts: implements IUseCaseEmpleados
+                    // Se le inyecta IEmpleadosRepository
+                    + getEmpleadosPorDepartamento(): Empleados[]
+                        // LLama a getEmpleados de IEmpleadosRepository
+                        // Filtra y retorna los empleados por departamento
+                    + presupuestoExcedido(departamento: string, presupuesto: number): boolean    
+                        // Obtiene los empleados del departamento
+                        // Suma los sueldos de los empleados
+                        // Retorna true si la suma de los sueldos es mayor al presupuesto
+                    + cambiarDepartamento(idEmpleado: number, nuevoDepartamento: string): boolean
+                        // Obtiene el empleado y el nuevo departamento
+                        // Cambia el departamento
+                        // Devuelve true si es correcto
+
+Presentation
+
+src/
+    presentation/
+        models/
+            dto/
+                ModelEmpleado.ts
+                    + idEmpleado: number (get)
+                    + nombre: string (get)
+                    + sueldo: double (get)
+                    + departamento: string (get)   
+                    + colorAlerta: string (get)      
+
+        viewModels/
+            VMDepartamentos.ts
+                // Se le inyecta IUseCaseEmpleados
+                + empleados: EmpleadosConAlerta [] (get)
+                + departamentoSeleccionado: string (get)
+                + presupuestoAlerta: boolean (get)
+                + isLoading: boolean (get)
+                + error: string | null (get)
+                + seleccionarDepartamamento(departamento: string): void
+                    // Pone isLoading en true 
+                    // Llama a getEmpleadosPorDepartamento(departamento) del caso de uso 
+                    // Llama a esPresupuestoExcedido(departamento, 6000) 
+                    // Mapea a EmpleadoConAlerta asignando color "red" si está excedido o "green" si no 
+                    // Asigna a empleados y apaga isLoading
+
+        views/
+            ViewDepartamentos.tsx
+                // Instancia VMDepartamentos.ts
+
+Ejercicio Practico: Taller Mecanico - Citas de Revision de Vehiculos 
+
+- Se debe utilizar Clean Architecture, el patron MVVM e Inyeccion de Dependencias. 
+- Se debe mostrar una vista con el listado de vehiculos que tienen cita de revision en el taller. 
+- Los datos vendran de una lista simulada en memoria (Mock con varios vehiculos). 
+- Cada vehiculo tiene los siguientes datos: id, matricula, marca, kilometros y anoMatriculacion. 
+Reglas de negocio (Casos de uso): 
+- La pantalla debe permitir filtrar los vehiculos: mostrar todos o mostrar unicamente los vehiculos que necesitan "Revision Urgente". 
+- Un vehiculo se considera de "Revision Urgente" si cumple cualquiera de estas dos condiciones: 
+1\. Tiene mas de 150.000 km. 
+2\. Tiene mas de 10 anos de antiguedad (calculado respecto al ano actual). 
+- El sistema debe calcular el coste estimado de la revision base: 
+- Si el coche tiene 10 anos o menos: 100 euros. 
+- Si el coche tiene mas de 10 anos: 150 euros (por recargo de vehiculo antiguo). 
+En la pantalla (Presentacion): 
+- Cada tarjeta de vehiculo debe mostrar la matricula, la marca, los kilometros y el coste estimado calculado. 
+- Si el vehiculo es de Revision Urgente, la tarjeta debe incluir una etiqueta o distintivo de color rojo; en caso contrario, de color verde. 
+- La pantalla dispondra de un selector o boton para alternar entre ver todos los vehiculos o solo los de Revision Urgente.
+
+
+Domain
+
+src/
+    domain/
+        entities/   
+            Vehiculos.ts
+                + id: number (get)
+                + matricula: string (get, set)
+                + marca: string (get, set)
+                + kilometros: number (get, set)
+                + anoMatriculacion: number (get, set)
+        interfaces/
+            repositories/
+                IVehiculosRepository.ts
+                    + getVehiculos(): Vehiculos[] 
+                        // Devuelve un array con todos los vehiculos
+            usecases/
+                IUseCaseVehiculos.ts
+                    + getVehiculos(): Vehiculos[] 
+                    + getVehiculosUrgentes(): Vehiculos[]
+                        // Muestra los vehiculos que necesiten revision, que cumplan que:
+                        // - Tiene mas de 150.000 kilometros
+                        // - Tiene más de 10 años de antiguedad:
+                            // Calcula la edad restando la fecha actual al año de matriculacion
+                    + costeRevisionBase(anoMatriculacion: Number): number
+                        // Recibe anoMatriculacion: Number
+                        // Calcula edad del vehiculo
+                        // Devuelve 150 si es mayor y 100 si es menor o igual de 10 años.
+                        
