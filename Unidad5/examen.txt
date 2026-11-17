@@ -1,0 +1,37 @@
+entidades
+razas:
+id
+nombre
+animal:
+id
+nombre
+sexo
+idRaza
+fecha
+
+repos:
+repAnimales:
+listAnimalesPorRzas(Date)
+actRaza(idRaza, id)
+repRazas:
+ListRazas()
+
+viewmodel:
+fechadehoy(get)
++boolean get 
++string get
++string get
++void actualizar ()
+
+model:
+animalUI:
+nombre
+idAnimal
+color
+listadoRazas [] (puede estar en el vm)
+idRaza 
+sexo
+
+
+
+
